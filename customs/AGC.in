@@ -1,0 +1,41 @@
+#Amplitude gain Control
+#measures the amplitude (digital or analog) and compare with setpoint
+#give amplitude and R gain as output
+
+<variables>
+f=1000
+<end>
+
+<circuits>
+
+composite amp	type=dAMP 			#digital amplitude detector
+#composite amp	type=aAMP  f=f		#analog amplitude detector (if you prefer)
+
+PI  agc
+opLLim limiter min=0
+
+
+<end>
+
+<externals>
+input signal
+input set
+input KP
+input KI
+output amp
+output Rt
+<end>
+
+<connections>
+me.signal   amp.signal		#feed signal to the amplitude detector
+amp.amp		me.amp			#forward the ampltude to the output
+
+amp.amp		agc.signal		#and give it to the PI controller
+me.set	    agc.set
+me.KP		agc.KP
+me.KI		agc.KI
+agc.out		limiter.in 		#do not allow for negarive R(t)
+limiter.out me.Rt
+<end>
+
+

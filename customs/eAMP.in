@@ -1,0 +1,43 @@
+#Simple (Exact) Amplitude Detector
+
+<variables>
+f=1000
+<end>
+
+<circuits>
+peaker p up=1
+peaker d up=0
+
+opSub minus ticked=1
+opDiv div ticked=1 in2=2
+
+composite lpamp type=NORM f=f
+
+<end>
+
+<externals>
+input signal
+output amp
+output amp2
+<end>
+
+<connections>
+me.signal	p.signal
+me.signal	d.signal
+me.signal	lpamp.signal
+
+p.peak		minus.in1
+d.peak		minus.in2
+d.tick		minus.tick
+
+minus.out	div.in1
+d.tick		div.tick
+
+div.out		me.amp
+lpamp.amp	me.amp2
+
+<end>
+
+
+<secondary>
+<end>

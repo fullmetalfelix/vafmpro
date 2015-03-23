@@ -1,0 +1,29 @@
+
+<variables>
+f0=200
+<end>
+
+<circuits>
+waversaw saw freq=f0 amp=1 phase=-0.25  #the saw wave generator
+peaker peak up=1          #peak detector for the signal canti
+opMul pdmul ticked=1 in2=1
+<end>
+
+<externals>
+input  signal
+output phase
+output saw
+<end>
+
+<connections>
+me.signal	peak.signal
+saw.out		pdmul.in1
+peak.tick	pdmul.tick
+pdmul.out	me.phase
+saw.out		me.saw
+<end>
+
+
+<secondary>
+<end>
+

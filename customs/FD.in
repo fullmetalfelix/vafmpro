@@ -1,0 +1,30 @@
+﻿<circuits>
+
+peaker lagger up=0
+runavg avg  samples=2000 ticked=1
+opDiv  frq in1=1
+
+<end>
+
+
+<externals>
+input   signal
+output  out
+<end>
+
+<connections>
+
+me.signal  lagger.signal
+lagger.tick  avg.tick
+lagger.delay avg.signal
+
+avg.out    frq.in2
+
+#avg.out    me.out
+frq.out    me.out
+
+<end>
+
+
+<secondary>
+<end>

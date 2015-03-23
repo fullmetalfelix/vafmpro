@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{1E4735EE-A8E9-4E2F-8832-06087E41D3CB}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>vafmpro</AssemblyName>
+    <RootNamespace>vafmpro</RootNamespace>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Commandlineparameters>inputtest.in</Commandlineparameters>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="AfterBuild" command="cp ${TargetFile} ~/projects/bin/." workingdir="${TargetDir}" externalConsole="true" />
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Compile Include="Circuits\Utilities\vco.cs" />
+    <Compile Include="InputReader.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="StringReaders.cs" />
+    <Compile Include="Circuits\Circuit.cs" />
+    <Compile Include="Circuits\Composite.cs" />
+    <Compile Include="Circuits\Oscillator.cs" />
+    <Compile Include="Forces\Forcer.cs" />
+    <Compile Include="Forces\Forcer_grid.cs" />
+    <Compile Include="Forces\Forcer_hyperb.cs" />
+    <Compile Include="Forces\Forcer_trilin.cs" />
+    <Compile Include="Circuits\Cantilever.cs" />
+    <Compile Include="Circuits\output.cs" />
+    <Compile Include="Circuits\Scanner.cs" />
+    <Compile Include="Circuits\Operators.cs" />
+    <Compile Include="Circuits\Scripter.cs" />
+    <Compile Include="ScripterFunctions.cs" />
+    <Compile Include="Circuits\flipflops.cs" />
+    <Compile Include="Circuits\Utilities\PI.cs" />
+    <Compile Include="Circuits\Filters\ALP.cs" />
+    <Compile Include="Circuits\Filters\RC.cs" />
+    <Compile Include="Circuits\SignalProc\Phi.cs" />
+    <Compile Include="Circuits\Utilities\ramper.cs" />
+    <Compile Include="Circuits\Utilities\Averagers.cs" />
+    <Compile Include="Circuits\SignalProc\signalproc.cs" />
+    <Compile Include="Circuits\SignalProc\discretes.cs" />
+    <Compile Include="Circuits\Utilities\timer.cs" />
+    <Compile Include="Circuits\Utilities\switch.cs" />
+    <Compile Include="Circuits\SignalProc\minmax.cs" />
+    <Compile Include="Circuits\Utilities\randoms.cs" />
+    <Compile Include="potentials.cs" />
+    <Compile Include="Circuits\Forces\IntrpLin3D.cs" />
+    <Compile Include="Circuits\Forces\IntrpSpXYLinZ.cs" />
+    <Compile Include="Circuits\Forces\surface.cs" />
+    <Compile Include="Circuits\Forces\vdWpsc.cs" />
+    <Compile Include="Circuits\Forces\absForces.cs" />
+    <Compile Include="Circuits\Forces\nacl.cs" />
+    <Compile Include="Circuits\Forces\FormulaForce.cs" />
+    <Compile Include="Circuits\Forces\IntrpLin1D.cs" />
+    <Compile Include="Circuits\Utilities\RSA.cs" />
+    <Compile Include="Circuits\Forces\vdwtorn.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="forces.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="input.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="inputtest.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\ADC.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\AmpD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\FD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\netTest.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\PLL.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\VCO.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="input_morten.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\MFAGC.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\SQD.in">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\AGCpro.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\eAMP.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\dPFD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\PM-AMPD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\PM-EXC.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\PM-PD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="surffield.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="fmafm.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\dAMPD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\NORM.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\AGC.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\aAMPD.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lif1.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="trilintest.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="customs\naclsimple.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="forces1d.in">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Circuits\Forces\" />
+    <Folder Include="customs\" />
+  </ItemGroup>
+</Project>

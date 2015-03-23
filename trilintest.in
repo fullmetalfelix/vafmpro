@@ -1,0 +1,36 @@
+#text file
+
+
+<circuits>
+timer time dt=5.0e-8
+
+i3Dlin force	file=lif1.in z=0
+
+<end>
+
+<connections>
+#--- Forces ---
+scanner.holderx force.x
+scanner.holdery force.y  #bias
+#scanner.holderz	force.z
+
+
+<end>
+
+
+<cantilever>
+position  0.0  0.0  0.0  # in nm -> z is z, x is y, y is bias
+
+forcemodule force
+
+<end>
+
+
+<output>
+trilin.txt 100 scanner.holderx scanner.holdery scanner.holderz force.F0
+<end> 
+
+
+<script>
+move x=1 v=10
+<end>

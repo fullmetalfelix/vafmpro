@@ -1,0 +1,30 @@
+﻿#Automatic Distance Control
+
+<circuits>
+PI   adc
+opLLim limiter
+opAdd  adder
+<end>
+
+<externals>
+input df
+input set
+input KP
+input KI
+input zlim
+input zscan
+output out
+<end>
+
+<connections>
+me.zlim		limiter.min
+me.zscan	adder.in1
+me.df	    adc.signal
+me.set	    adc.set
+me.KP		adc.KP
+me.KI		adc.KI
+adc.out		adder.in2
+adder.out	limiter.in
+limiter.out me.out
+
+<end>

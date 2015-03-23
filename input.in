@@ -1,0 +1,53 @@
+﻿#text file
+
+<circuits>
+timer 5.0e-8
+
+waver fgen freq=100000 amp=1
+
+<end>
+
+<connections>
+
+<end>
+
+
+<cantilever>
+position 0.0 0.0 0.0  # in nm
+
+<end>
+
+
+
+<output>
+
+<end>
+
+<scanner>
+
+<end>
+
+<composites>
+aAMP	./customs/aAMPD.in
+dAMP	./customs/dAMPD.in
+dPFD	./customs/dPFD.in
+AGC		./customs/AGC.in
+
+DUM		./customs/dummy.in
+PMAMP	./customs/PM-AMPD.in
+PMEXC	./customs/PM-EXC.in
+PMPD    ./customs/PM-PD.in
+PFD		./customs/PFDetector.in
+
+VCO		./customs/VCO.in
+SQD		./customs/SQD.in
+PLL		./customs/PLL.in
+MFAGC	./customs/MFAGC.in
+
+AMP		./customs/AmpD2.in
+eAMP	./customs/eAMP.in
+ADC		./customs/ADC.in
+FD      ./customs/FD.in
+NORM	./customs/signalnorm.in
+<end>
+

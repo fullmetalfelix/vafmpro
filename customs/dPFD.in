@@ -1,0 +1,74 @@
+#Digital Phase/Frequency detector
+#NOTE: the ref signal is converted to digital automatically, i.e, when the wave becomes positive
+#		the digital signal becomes high. This works brilliantly... if the signal has little to no
+#		DC offset. In case of strong offset, it should be corrected beforehand.
+
+<variables>
+gain=100
+fc=1000
+<end>
+
+<circuits>
+flipflopDR	ffdr1	D=1	 pushed=true	#flipflop for the go-fast signal
+flipflopDR	ffdr2	D=1	 pushed=true	#flipflop for the go-slow signal
+
+opAND and pushed=true	  #if the two signals are high, reset the flipflops
+flip  norflp pushed=true  #but reset only at the switching instant
+
+opSub sub pushed=true	  				#combine the go-fast and go-slow signals
+gain  dfgain gain=gain pushed=true
+SKLP lowpass fc=fc Q=0.707106781 gain=1.570827842 pushed=true     #the LP filter converts digital to analog DF
+
+
+PI pi pushed=true
+opSub adder pushed=true
+
+<end>
+
+<externals>
+input ref
+input vco
+input KP
+input KI
+output df
+output pi
+output q1
+output q2
+<end>
+
+<connections>
+me.KP pi.KP
+me.KI pi.KI
+
+me.ref	ffdr1.clock
+me.vco	ffdr2.clock
+
+ffdr1.Q	and.in1
+ffdr2.Q	and.in2
+
+and.out	norflp.signal #me.pi
+norflp.tick	ffdr2.R ffdr1.R  #resets when both flipflops are high
+
+ffdr1.Q	 sub.in1 me.q1
+ffdr2.Q	 sub.in2 me.q2
+
+#sub.out	 dfgain.signal
+#dfgain.out	lowpass.signal
+#lowpass.out	me.df
+
+#sub.out	 lowpass.signal
+#lowpass.out	dfgain.signal
+#dfgain.out	me.df
+
+sub.out	 pi.signal
+pi.out	lowpass.signal
+lowpass.out		dfgain.signal
+dfgain.out	me.df
+
+#dfgain.out	adder.in1
+#pi.out		adder.in2
+
+
+<end>
+
+

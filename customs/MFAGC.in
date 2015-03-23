@@ -1,0 +1,64 @@
+#Amplitude gain Control
+#measures the amplitude and compare with setpoint
+#give amplitude and R gain as output
+
+<variables>
+f=100000
+bw=100000
+fl=1000
+<end>
+
+<circuits>
+SKBP ppfilter gain=1.0  band=bw  fc=f   #first bandpass
+SKBP pfilter gain=1.0  band=bw  fc=f   #first bandpass
+SKBP filter gain=1.02  band=bw  fc=f   #second bandpass
+
+opAbs  abs		#then do the abs
+SKLP lowpass fc=fl Q=0.707106781 gain=1.570827842     #the lowpass filter
+
+PI  agc
+opLLim limiter
+
+opDiv nsignal factors=2
+Scripter asder
+
+<end>
+
+<externals>
+input signal
+input set
+input KP
+input KI
+output amp
+output Rt
+output out
+output nout
+<end>
+
+<connections>
+me.signal	ppfilter.signal
+ppfilter.out	pfilter.signal
+pfilter.out	filter.signal
+filter.out  abs.in
+abs.out lowpass.signal
+lowpass.out me.amp
+lowpass.out agc.signal
+me.set	    agc.set
+me.KP		agc.KP
+me.KI		agc.KI
+agc.out		limiter.in  #do not allow for negarive R(t)
+limiter.out me.Rt
+filter.out	me.out
+
+filter.out  nsignal.in1
+lowpass.out nsignal.in2
+nsignal.out me.nout
+<end>
+
+
+<secondary>
+<end>
+
+<script>
+wait t=0.02
+<end>

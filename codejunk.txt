@@ -1,0 +1,47 @@
+﻿           
+                /*
+                foreach (Circuit ch in Circuits)
+                    if (ch.Name == words[0])
+                    { c1 = ch; break; }
+                foreach (Circuit ch in Consts)
+                    if (ch.Name == words[0])
+                    { c1 = ch; break; }
+                if (c1 == null)
+                {
+                    Console.WriteLine("FATAL! Circuit {0} was not found.", words[0]);
+                    return false;
+                }
+                //******************************
+                //find the second circuit
+                foreach (Circuit ch in Circuits)
+                    if (ch.Name == words[2])
+                    { c2 = ch; break; }
+                foreach (Circuit ch in Consts)
+                    if (ch.Name == words[2])
+                    { c2 = ch; break; }
+                if (c2 == null)
+                {
+                    Console.WriteLine("FATAL! Circuit {0} was not found.", words[2]);
+                    return false;
+                }
+
+                Channel v1; //get the channel from the first circuit
+                v1 = c1.GetOutputChannel(words[1]);
+                if (v1 == null)
+                {
+                    Console.WriteLine("FATAL! Channel {0} is not in the output channel of circuit {1}.", words[1], c1.Name);
+                    return false;
+                }
+                if (c2.GetInputChannel(words[3]) == null)
+                {
+                    Console.WriteLine("FATAL! Channel {0} is not in the input channel of circuit {1}.", words[3], c2.Name);
+                    return false;
+                }
+                 */
+
+
+
+
+
+
+

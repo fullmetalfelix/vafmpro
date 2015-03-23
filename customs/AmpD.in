@@ -1,0 +1,47 @@
+﻿#Amplitude gain Control
+#measures the amplitude and compare with setpoint
+#give amplitude and R gain as output
+
+<variables>
+f=200
+<end>
+
+<circuits>
+opAbs  abs
+SKLP lowpass fc=f Q=0.707106781 gain=1.570827842     #the lowpass filter
+
+PI  agc
+opLLim limiter min=0
+
+opDiv  div
+
+<end>
+
+<externals>
+input signal
+input set
+input KP
+input KI
+output amp
+output Rt
+output nsignal
+<end>
+
+<connections>
+me.signal   abs.in
+abs.out lowpass.signal
+lowpass.out me.amp
+lowpass.out agc.signal
+me.set	    agc.set
+me.KP		agc.KP
+me.KI		agc.KI
+agc.out		limiter.in  #do not allow for negarive R(t)
+limiter.out me.Rt
+me.signal	div.in1
+lowpass.out	div.in2
+div.out		me.nsignal
+<end>
+
+
+<secondary>
+<end>

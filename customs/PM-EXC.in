@@ -1,0 +1,63 @@
+
+
+<variables>
+<end>
+
+<circuits>
+
+waver exc	amp=1
+PI	agc
+opBLim limiter min=0 max=10
+
+opMul mul
+
+Switch piswitch	in1=1
+Switch Qcswitch	in1=0
+
+gain  g  gain=0.2
+
+opAdd adder
+<end>
+
+<externals>
+input	signal
+input	amp
+input	set
+input	KI
+input	KP
+input	PION
+input	QCON
+input	fexc
+
+output	exc
+output	rt
+<end>
+
+
+<connections>
+
+#agc connections
+me.PION	piswitch.switch
+me.amp	agc.signal
+me.set	agc.set
+me.KI	agc.KI
+me.KP	agc.KP
+
+agc.out	limiter.in
+limiter.out	piswitch.in2
+
+me.fexc	exc.freq	#frequency of the exciter
+exc.sin	mul.in1
+piswitch.out	mul.in2	me.rt
+
+mul.out	adder.in1
+
+#qcontrol
+me.QCON		Qcswitch.switch
+me.signal	g.signal
+g.out		Qcswitch.in2
+
+Qcswitch.out	adder.in2
+adder.out	me.exc
+
+<end>

@@ -1,0 +1,633 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.IO;
+using vafmpro.Circuits;
+using vafmpro.AbsCircuits;
+using vafmpro.Instructions;
+
+namespace vafmpro
+{
+
+    public delegate void ScriptFunctionInit(double[] vars, string[] svars);     //delegate prototype for functions initializers?!
+    public delegate bool ScriptFunction(double dt);         //delegate prototype for functions?!
+
+
+    //functions for scripted instructions
+    partial class Program
+    {
+        
+        private static double displ = 0.0, speed = 0.0, ptsdist,tmp;
+        private static double[] MoveDirection = new double[3];
+		private static double[] FinalPosition = new double[3];
+		
+        private static int scanPts = 0;  //scan line counter
+
+		public static List<Function_Circuit> FScript;
+        public static List<Instruction> Script;  //list of the instruction in the input file
+        private static int scriptIdx = 0;        //index of the current instruction
+
+
+        private static double[] HolderPosition = new double[3];  //holder position
+
+        public static List<ScriptFunctionInit> FunctionsInit;     //list of the methods (index=code)
+        public static List<ScriptFunction> Functions;             //list of the methods (index=code)
+
+        private static bool ScriptError = false;
+
+        public static void ScriptInit()
+        {
+            FunctionsInit = new List<ScriptFunctionInit>();
+            Functions = new List<ScriptFunction>();
+
+            //                                                                                     Code
+            FunctionsInit.Add(new ScriptFunctionInit(PlaceInit));   //placement instruction         1
+            Functions.Add(new ScriptFunction(Place));
+            FunctionsInit.Add(new ScriptFunctionInit(MoveInit));   //move instruction               2
+            Functions.Add(new ScriptFunction(Move));
+            FunctionsInit.Add(new ScriptFunctionInit(MoveToInit)); //moveto instruction             3
+            Functions.Add(new ScriptFunction(Move)); //same instruction, initialized differently
+            //connection/disconnection on the fly
+            FunctionsInit.Add(new ScriptFunctionInit(ConnectInit)); //                              4
+            Functions.Add(new ScriptFunction(Connect));
+            FunctionsInit.Add(new ScriptFunctionInit(DisConnectInit)); //                           5
+            Functions.Add(new ScriptFunction(Connect));
+            FunctionsInit.Add(new ScriptFunctionInit(SetConstInit)); //                             6
+            Functions.Add(new ScriptFunction(Connect));
+            FunctionsInit.Add(new ScriptFunctionInit(ChangeInInit)); //                             7
+            Functions.Add(new ScriptFunction(Connect));
+            FunctionsInit.Add(new ScriptFunctionInit(WaitInit)); //                                 8
+            Functions.Add(new ScriptFunction(Wait));
+            FunctionsInit.Add(new ScriptFunctionInit(WaitONInit)); //                               9
+            Functions.Add(new ScriptFunction(WaitON));
+            FunctionsInit.Add(new ScriptFunctionInit(WaitFlatInit)); //                            10
+            Functions.Add(new ScriptFunction(WaitFlat));
+            FunctionsInit.Add(new ScriptFunctionInit(ScanInit)); //                                11
+            Functions.Add(new ScriptFunction(Scan));
+            FunctionsInit.Add(new ScriptFunctionInit(GotoInit)); //                                12
+            Functions.Add(new ScriptFunction(Goto));
+            FunctionsInit.Add(new ScriptFunctionInit(SetPriorityInit)); //                         13
+            Functions.Add(new ScriptFunction(Connect));
+			FunctionsInit.Add(new ScriptFunctionInit(OutWriteLineInit));//                         14
+			Functions.Add(new ScriptFunction(Connect));
+			
+        }
+
+        
+        #region "scriptable functions"
+
+        private static void PlaceInit(double[] vars, string[] svars)
+        {
+            Circuit c; Channel ch;
+            bool[] stringed = new bool[3];
+
+            for (int i = 0; i < 3; i++)
+            {
+                stringed[i] = false;
+                if (double.IsNaN(vars[i])) //if one coord is nan use the circuit.channel names
+                {
+                    Circuit.CheckCircuitChannel(new string[] { svars[i * 2], svars[i * 2 + 1] }, ChannelType.Any, out c, out ch);
+                    vars[i] = ch.Signal.Value;
+                    stringed[i] = true;
+                }
+
+                HolderPosition[i] = vars[i];
+                myScanner.Output[i].Signal.Value = vars[i];
+            }
+
+            Console.Write("Scanner: place cantilever in");
+            for (int i = 0; i < 3; i++)
+            {
+                Console.Write(" {0}", vars[i]);
+                if (stringed[i])
+                    Console.Write("[{0}.{1}]", svars[i * 2], svars[i * 2 + 1]);
+            }
+
+        }
+        private static bool Place(double dt)
+        { return true; }
+
+        private static void MoveInit(double[] vars, string[] svars)
+        {
+            bool[] stringed = new bool[4];
+
+            Circuit c; Channel ch;
+            for (int i = 0; i < 3; i++)
+            {
+                stringed[i] = false;
+                if (double.IsNaN(vars[i])) //if one coord is nan use the circuit.channel names
+                {
+                    Circuit.CheckCircuitChannel(new string[] { svars[i * 2], svars[i * 2 + 1] }, ChannelType.Any, out c, out ch);
+                    vars[i] = ch.Signal.Value;
+                    stringed[i] = true;
+                }
+            }
+
+            displ = Math.Sqrt(vars[0] * vars[0] + vars[1] * vars[1] + vars[2] * vars[2]);
+            speed = vars[3];
+			tmp = displ*0.9;
+			ptsdist = displ*0.1;
+			
+            for (int i = 0; i < 3; i++)
+            {
+                MoveDirection[i] = speed * vars[i] / displ;
+                FinalPosition[i] = vars[i] + HolderPosition[i];
+            }
+
+            //now we have a move direction normalized to the speed,
+            //displ is the length to travel and finalpos the exact final position
+            Console.Write("Scanner: move by");
+            for (int i = 0; i < 3; i++)
+            {
+                Console.Write(" {0}", vars[i]);
+                if (stringed[i])
+                    Console.Write("[{0}.{1}]", svars[i * 2], svars[i * 2 + 1]);
+            }
+            Console.Write(" at speed {0}", vars[3]);
+            if (stringed[3])
+                Console.WriteLine("[{0}.{1}].", svars[6], svars[7]);
+            else
+                Console.WriteLine(".");
+            Console.Write("   - final position: {0} {1} {2}", FinalPosition[0], FinalPosition[1], FinalPosition[2]);
+
+        }
+        private static bool Move(double dt)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                HolderPosition[i] += dt * MoveDirection[i];
+                myScanner.Output[i].Signal.Value = HolderPosition[i];
+            }
+            displ -= speed * dt;
+			if(displ <= tmp)
+			{
+				tmp -= ptsdist;
+				Console.Write(".");
+			}
+			
+            //check if the distance was travelled
+            if (displ <= 1.0e-16)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    HolderPosition[i] = FinalPosition[i];
+                    myScanner.Output[i].Signal.Value = HolderPosition[i];
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void MoveToInit(double[] vars, string[] svars)
+        {
+            speed = vars[3];
+            bool[] stringed = new bool[4];
+
+            Circuit c; Channel ch;
+            for (int i = 0; i < 4; i++)
+            {
+                stringed[i] = false;
+                if (double.IsNaN(vars[i])) //if one coord is nan use the circuit.channel names
+                {
+                    Circuit.CheckCircuitChannel(new string[] { svars[i * 2], svars[i * 2 + 1] }, ChannelType.Any, out c, out ch);
+                    vars[i] = ch.Signal.Value;
+                    stringed[i] = true;
+                }
+            }
+
+            //set the final position
+            for (int i = 0; i < 3; i++)
+            {
+                FinalPosition[i] = vars[i];
+                MoveDirection[i] = vars[i] - HolderPosition[i];
+            }
+
+            displ = Math.Sqrt(MoveDirection[0] * MoveDirection[0] + MoveDirection[1] * MoveDirection[1] + MoveDirection[2] * MoveDirection[2]);
+			tmp = displ*0.9;
+			ptsdist = displ*0.1;
+			speed = vars[3];
+			
+            for (int i = 0; i < 3; i++)
+                MoveDirection[i] = speed * MoveDirection[i] / displ;
+
+            //now we have a move direction normalized to the speed,
+            //displ is the length to travel and finalpos the exact final position
+            Console.Write("Scanner: move to ");
+            for (int i = 0; i < 3; i++)
+            {
+                Console.Write(" {0}", FinalPosition[i]);
+                if (stringed[i])
+                    Console.Write("[{0}.{1}]", svars[i * 2], svars[i * 2 + 1]);
+            }
+            Console.Write(" at speed {0}", vars[3]);
+
+        }
+
+        private static void ConnectInit(double[] vars, string[] svars)
+        {
+            //make a connection on the fly!
+            Circuit c1, c2;
+            Channel v1, v2;
+            Circuit.CheckCircuitChannel(new string[] { svars[0], svars[1] }, ChannelType.Output, out c1, out v1);
+            Circuit.CheckCircuitChannel(new string[] { svars[2], svars[3] }, ChannelType.Input, out c2, out v2);
+
+            c2.Connect(v1, svars[3]);
+
+            //check the if the update order is screwd!
+            ScriptError = !CheckUpdateSequence();
+
+        }
+        private static void DisConnectInit(double[] vars, string[] svars)
+        {
+            Circuit c1; Channel v1;
+			Circuit.CheckCircuitChannel(new string[] { svars[0], svars[1] }, ChannelType.Input,out c1, out v1);
+			double val = v1.Signal.Value;
+			
+			v1.Signal = new Feed();
+			v1.Signal.Value = val;
+			
+            Console.Write("Disconnecting {0}.{1} from any other channel.", c1.Name, v1.Name);
+
+            CheckUpdateSequence();//check the if the update order is screwd!
+
+        }
+        private static bool Connect(double dt)
+        { return true; }
+
+        private static void SetConstInit(double[] vars, string[] svars)
+        {
+			//bool stringed = false;
+            Circuit c; Channel ch = null;
+			//double newval;
+			
+			Console.Write("Scanner: changing constant ({0}) ",vars.Length.ToString());
+			//loop on the passed parameters:
+			for(int i=0;i<vars.Length;i++)
+			{
+				//stringed = false;
+				if(double.IsNaN(vars[i]))//if one value is nan use the circuit.channel names
+				{
+					//stringed = true;
+					Circuit.CheckCircuitChannel(new string[] { svars[4*i+2], svars[4*i+3] }, ChannelType.Any, out c, out ch);
+					vars[i] = ch.Signal.Value;
+				}
+				
+				Circuit.CheckCircuitChannel(new string[] { svars[4*i], svars[4*i+1] }, ChannelType.Output, out c, out ch); //get the constant
+				ch.Signal.Value = vars[i];
+				Console.Write(" {0} to {1} | ", svars[4*i], vars[i]);
+			}
+	
+            
+        }
+        private static void ChangeInInit(double[] vars, string[] svars)
+        {
+			Circuit c; Channel ch = null;
+			Console.Write("Scanner: changing input channels ({0}) ",vars.Length.ToString());
+			//loop on the passed parameters:
+			for(int i=0;i<vars.Length;i++)
+			{
+				//stringed = false;
+				if(double.IsNaN(vars[i]))//if one value is nan use the circuit.channel names
+				{
+					//stringed = true;
+					Circuit.CheckCircuitChannel(new string[] { svars[4*i+2], svars[4*i+3] }, ChannelType.Any, out c, out ch);
+					vars[i] = ch.Signal.Value;
+				}
+				
+				Circuit.CheckCircuitChannel(new string[] { svars[4*i], svars[4*i+1] }, ChannelType.Input, out c, out ch); //get the constant
+				ch.Signal.Value = vars[i];
+				Console.Write(" {0} to {1} | ", svars[4*i], vars[i]);
+			}
+			
+
+        }
+
+        private static void WaitInit(double[] vars, string[] svars)
+        {
+            Circuit c; Channel ch = null;
+
+            if (double.IsNaN(vars[0])) //if one coord is nan use the circuit.channel names
+            {
+                Circuit.CheckCircuitChannel(new string[] { svars[0], svars[1] }, ChannelType.Any, out c, out ch);
+                vars[0] = ch.Signal.Value;
+            }
+            displ = vars[0];
+			speed = vars[0]*0.9;
+			ptsdist = vars[0]*0.1;
+			
+            Console.Write("Waiting for {0}s: ", displ);
+			
+        }
+        private static bool Wait(double dt)
+        {
+            displ -= dt;
+			if(displ <= speed)
+			{
+				Console.Write("."); //print a point to let the user know that we are still alive
+				speed -= ptsdist;
+			}
+			
+            if (displ <= 0)
+                return true;
+            return false;
+        }
+
+        private static void WaitONInit(double[] vars, string[] svars)
+        {
+
+            Circuit c; Channel ch = null;
+            if (vars[0] == 0) //if the max waiting time is 0 (meaning it was not given...)
+            {
+                displ = double.NaN;
+                Console.Write("Scanner: waiting for channel {0} to get ON (max waiting time not given).", svars[0]);
+            }
+            else if (double.IsNaN(vars[0])) // if is nan, use string description
+            {
+                Circuit.CheckCircuitChannel(new string[] { svars[1], svars[2] }, ChannelType.Any, out c, out ch);
+                displ = ch.Signal.Value;
+                Console.Write("Scanner: waiting for channel {0} to get ON (max waiting time {1} [{2}.{3}]).", svars[0], displ, svars[1], svars[2]);
+            }
+            else
+            {
+                displ = vars[0];
+                Console.Write("Scanner: waiting for channel {0} to get ON (max waiting time {1}).", svars[0], displ);
+            }
+
+        }
+        private static bool WaitON(double dt)
+        {
+            if (!double.IsNaN(displ)) //if there is a given waiting time
+                displ -= dt; //reduce the waiting time
+			
+			throw new Exception("WaitON not correctly implemented. Check it!");
+			
+            //check if the time elapsed OR the channel is ON. Note that if displ is NAN the first bool will be always false!
+            //if ((displ <= 0) || (myScanner.GetInputChannel(Script[scriptIdx].sParam[0]).Value > 0.0))
+            //    return true;
+
+            return false;
+        }
+
+        private static void WaitFlatInit(double[] vars, string[] svars)
+        {
+            //flatter = new double[(vars.Length - 1)/2];
+            displ = vars[0];
+			Circuit c; Channel ch = null;
+			
+			for(int i=0;i<(vars.Length-1)/2;i++)
+			{
+				if(double.IsNaN(vars[2*i+1]))
+				{
+					Circuit.CheckCircuitChannel(new string[] { svars[6*i+2], svars[6*i+3] }, ChannelType.Any, out c, out ch);
+					vars[2*i+1]=ch.Signal.Value;
+				}
+				if(double.IsNaN(vars[2*i+2]))
+				{
+					Circuit.CheckCircuitChannel(new string[] { svars[6*i+4], svars[6*i+5] }, ChannelType.Any, out c, out ch);
+					vars[2*i+2]=ch.Signal.Value;
+				}
+			}
+				
+			
+            speed = 0;
+            Console.Write("Scanner: waiting FLAT on multiple channels... ");
+        }
+        private static bool WaitFlat(double dt)
+        {
+            //wait until the derivative of all signals stays around 0+-tolerance for the required time.
+
+            Circuit c; Channel v;
+            string[] names = Script[scriptIdx].sParam;
+            speed += dt;
+            bool flat = true;
+
+            for (int i = 0; i < (Script[scriptIdx].Param.Length-1)/2; i++)
+            {
+                Circuit.CheckCircuitChannel(new string[] { names[i*6], names[i*6 + 1] }, ChannelType.Any, out c, out v);
+                flat = flat && (Math.Abs( Script[scriptIdx].Param[1+i*2] - v.Signal.Value) < Script[scriptIdx].Param[2+i*2]);
+            }
+
+            if (flat)
+                displ -= dt;
+            else
+                displ = Script[scriptIdx].Param[0]; //reset the relaxation time
+
+            //check if the time elapsed with the signal flat itz done
+            if (displ <= 0)
+            {
+                Console.Write("done in {0}s",speed);
+                return true;
+            }
+
+            return false;
+        }
+
+
+        private static void ScanInit(double[] vars, string[] svars)
+        {
+
+            #region "names/value converter"
+            //take the value from circ.channel names when needed
+            for (int i = 0; i < vars.Length; i++)
+            {
+                if (double.IsNaN(vars[i])) //if the numeric is not given...
+                {
+                    Circuit c; Channel v;
+                    Circuit.CheckCircuitChannel(new string[2] { svars[2 * i], svars[2 * i + 1] }, ChannelType.Any, out c, out v); // get the channel
+                    vars[i] = v.Signal.Value;
+                }
+            }
+            #endregion
+
+			// X Y Z L V PTS
+			speed = vars[4]; //movement speed
+			
+            //normalize the scanning direction to the scan speed
+            double norm = Math.Sqrt(vars[0] * vars[0] + vars[1] * vars[1] + vars[2] * vars[2]);
+            vars[0] /= norm;
+            vars[1] /= norm;
+			vars[2] /= norm;
+			
+			
+            ptsdist = vars[3] / (vars[5]-1); //store here the distance between the points to record
+            displ = ptsdist;
+	
+            scanPts = 0;
+
+			for (int i = 0; i < 3; i++)
+            {
+				MoveDirection[i] = vars[i]*speed;
+                FinalPosition[i] = vars[i]*vars[3] + HolderPosition[i];
+            }
+			
+            //record this point!
+            myScanner.Output[6].Signal.Value = 1.0; //give the record signal
+
+            Console.Write("Scanning:");
+
+
+        }
+        private static bool Scan(double dt)
+        {
+
+            //check if we are in position...
+            if (displ <= 1.0e-16) //the dist between 2 points has been travelled
+            {
+                displ = ptsdist - displ; //reset the distance to travel to go to the next point
+                scanPts++;
+                myScanner.Output[6].Signal.Value = 1.0; //give the record signal
+                Console.Write(".");
+            }
+            else
+            {
+                myScanner.Output[6].Signal.Value = 0.0; //clear the record signal
+            }
+
+            if (scanPts == Script[scriptIdx].Param[5] - 1)
+            {
+                Console.Write(" done");
+				for(int i=0;i<3;i++) //put the cantilever(scanner) where it is supposed to be
+				{
+					HolderPosition[i] = FinalPosition[i];
+					myScanner.Output[i].Signal.Value = HolderPosition[i];
+				}
+                myScanner.StopRecord = true; //tell the scanner to stop recording on the next timestep
+                return true;
+            }
+
+            //move along the line...
+            displ -= dt * speed;
+
+			for(int i=0;i<3;i++)//move the cantilever
+			{
+				HolderPosition[i] += MoveDirection[i] * dt;
+				myScanner.Output[i].Signal.Value = HolderPosition[i]; //set the position in the scanner channels
+			}
+
+            return false;
+        }
+
+        private static void GotoInit(double[] vars, string[] svars)
+        {
+
+            scanPts = Convert.ToInt32(vars[1]);
+
+            Console.Write("Going to instruction #{0}",vars[0]);
+
+
+        }
+        private static bool Goto(double dt)
+        {
+
+            scanPts--;
+
+            if(scanPts == 0)
+                return true;
+
+
+            return false;
+        }
+
+        private static void SetPriorityInit(double[] vars, string[] svars)
+        {
+            //make a connection on the fly!
+            Circuit c1;
+            Channel v1;
+            Circuit.CheckCircuitChannel(new string[] { svars[0], svars[1] }, ChannelType.Input, out c1, out v1);
+            if (vars[0] == 1)
+            {
+                v1.Priority = false;
+                Console.Write("Channel {0}.{1} is now secondary.", svars[0], svars[1]);
+            }
+            else
+            {
+                v1.Priority = true;
+                Console.Write("Channel {0}.{1} is now primary.", svars[0], svars[1]);
+            }
+            
+            //check the if the update order is screwd!
+            ScriptError = !CheckUpdateSequence();
+            
+        }
+		
+		private static void OutWriteLineInit(double[] vars, string[] svars)
+		{
+			int outch=Convert.ToInt32(vars[0]);
+			StringBuilder sb = new StringBuilder();
+			for(int i=0;i<svars.Length;i++)
+			{
+				sb.Append(svars[i]);
+				sb.Append(" ");
+			}
+			
+			if(outch<0)
+				Console.WriteLine("{0}",sb.ToString());
+			else
+				Out.WriteChannel(outch,sb.ToString());
+			
+		}
+
+        #endregion
+
+
+
+        public static bool ScriptUpdate(double dt)
+        {
+            int funCode = Script[scriptIdx].Code; //this is the code of the currently active function
+
+            if (ScriptError)
+            {
+                Console.WriteLine("Halting execution because an error occurred!");
+                return false;
+            }
+
+            bool finished = Functions[funCode - 1](dt);  //call the right function
+            if (finished) //if the action was finished...
+            {
+				Console.WriteLine();
+                Script[scriptIdx].Reinit(); //restore the original value parameters for later use (in case of a goto)
+
+                //check if it was the last action
+                if (scriptIdx + 1 >= Script.Count)
+                {
+                    myScanner.Output[3].Signal.Value = 1.0; //activate the stopper
+                    return false; //get out of here
+                }
+
+                scriptIdx++;  //increase the action counter
+                funCode = Script[scriptIdx].Code;
+
+                //check if the instruction is a goto:  //as a result of this gotos are never initialized and never "executed"
+                if (funCode == 12)
+                {
+                    if (Script[scriptIdx].Param[1] == 0) //if this was the last rebound...
+                    {
+                        Script[scriptIdx].Reinit(); //reinit the goto
+                        scriptIdx++;  //increase the action counter to surpass the goto
+						Console.WriteLine("initliazing instruction {0}.",scriptIdx);
+                        funCode = Script[scriptIdx].Code;
+                    }
+                    else //if it wasnt the last one
+                    {
+                        Script[scriptIdx].Param[1]--; //decrese the number of repetition
+                        scriptIdx = Convert.ToInt32(Script[scriptIdx].Param[0]); //set the pointer to the pointed instruction
+                        funCode = Script[scriptIdx].Code;
+                    }
+                }
+
+                FunctionsInit[funCode - 1](Script[scriptIdx].Param, Script[scriptIdx].sParam);  //initialize the new function
+                myScanner.Output[4].Signal.Value = funCode - 1; //set the output channels for the command information
+                myScanner.Output[5].Signal.Value = scriptIdx;
+
+            }
+
+            return true;
+        }
+
+
+
+    }
+
+}

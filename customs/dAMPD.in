@@ -1,0 +1,22 @@
+#Digital Amplitude detector
+#this probes max and min of signal between clock cycles.
+#at the clock front, it outputs the amplitude
+
+<circuits>
+minmax  probe pushed=true
+
+<end>
+
+<externals>
+input	signal
+output	amp
+
+<end>
+
+<connections>
+me.signal	probe.signal probe.clock
+probe.amp	me.amp
+<end>
+
+
+

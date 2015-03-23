@@ -1,0 +1,69 @@
+#analog Symmetric quadrature demodulator
+
+<variables>
+f=200000
+signal=100
+<end>
+
+<circuits>
+
+waver ref freq=f amp=2
+
+opMul m1
+opMul m2
+
+SKLP lpf111 fc=600 Q=0.707106781 gain=1.     #the lowpass filter
+SKLP lpf11 fc=400 Q=0.707106781 gain=1.     #the lowpass filter
+SKLP lpf1 fc=100 Q=0.707106781 gain=1.     #the lowpass filter
+SKLP lpf211 fc=600 Q=0.707106781 gain=1.     #the lowpass filter
+SKLP lpf21 fc=400 Q=0.707106781 gain=1.     #the lowpass filter
+SKLP lpf2 fc=100 Q=0.707106781 gain=1.     #the lowpass filter
+
+deriver d1 p3=1
+deriver d2 p3=1
+
+opMul  fm1  factors=3  in3=0.15915494309189535
+opMul  fm2  factors=3  in3=0.15915494309189535
+
+opSub  deltaf
+#gain   g   gain=0.15915494309189535
+
+<end>
+
+<externals>
+input   signal
+output  df
+<end>
+
+
+<connections>
+me.signal  m1.in1
+ref.cos    m1.in2
+me.signal  m2.in1
+ref.sin    m2.in2
+
+m1.out		lpf111.signal
+lpf111.out	lpf11.signal
+lpf11.out	lpf1.signal
+m2.out		lpf211.signal
+lpf211.out	lpf21.signal
+lpf21.out	lpf2.signal
+
+lpf1.out	d1.signal
+lpf2.out	d2.signal
+
+d1.out		fm1.in1
+lpf2.out	fm1.in2
+
+d2.out		fm2.in1
+lpf1.out	fm2.in2
+
+fm1.out		deltaf.in1
+fm2.out		deltaf.in2
+deltaf.out  me.df
+
+<end>
+
+
+
+

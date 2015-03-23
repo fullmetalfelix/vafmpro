@@ -1,0 +1,31 @@
+#Simple signal normalizer
+#get the amplitude of a signal and output the signal divided by its amplitude
+#the output is limited between -1 and 1
+#the amplitude is computed with a simple lowpass filter acting on the absolute
+#value of the signal.
+
+<variables>
+f=1000
+<end>
+
+<circuits>
+opAbs  abs
+SKLP lowpass  fc=f Q=0.707106781 gain=1.570827842     #the lowpass filter
+opDiv  div
+opBLim limiter max=1 min=-1
+<end>
+
+<externals>
+input  signal
+output out
+<end>
+
+<connections>
+me.signal    abs.in
+abs.out      lowpass.signal
+me.signal    div.in1
+lowpass.out  div.in2    		#divide original signal by its amplitude
+div.out      limiter.in 		#and limit it to avoid spikes
+limiter.out  me.out
+<end>
+

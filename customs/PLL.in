@@ -1,0 +1,49 @@
+﻿#analog PLL
+
+<circuits>
+opMul  ffd            #the multiplier
+SKLP pplowpass fc=2000  Q=0.707106781 gain=1.570827842    #the lowpass filter (butterworth second order)
+SKLP plowpass fc=1000  Q=0.707106781 gain=1.570827842    #the lowpass filter (butterworth second order)
+SKLP lowpass fc=500  Q=0.707106781 gain=1.570827842    #the lowpass filter (butterworth second order)
+
+gain  dfgain  gain=100    #converts the signal to the actual frequency
+
+opAdd  fsum
+
+waver  vco amp=1
+<end>
+
+<externals>
+input signal1  
+input signal2
+input f0   #the fundamental frequency
+output df
+output freq
+output cos
+output sin
+output debug
+<end>
+
+
+<connections>
+me.signal1	ffd.in1
+me.signal2  ffd.in2
+ffd.out pplowpass.signal
+
+pplowpass.out plowpass.signal
+plowpass.out lowpass.signal
+lowpass.out me.debug
+lowpass.out dfgain.signal
+
+dfgain.out  fsum.in1
+me.f0       fsum.in2   #sum F0 and DF
+fsum.out    vco.freq
+
+vco.sin  me.sin 
+vco.cos  me.cos
+
+dfgain.out  me.df
+fsum.out    me.freq
+
+<end>
+

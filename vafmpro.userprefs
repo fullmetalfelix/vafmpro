@@ -1,0 +1,57 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Circuits/Cantilever.cs">
+    <Files>
+      <File FileName="inputtest.in" Line="33" Column="6" />
+      <File FileName="Program.cs" Line="282" Column="14" />
+      <File FileName="customs/dPFD.in" Line="71" Column="1" />
+      <File FileName="Circuits/Cantilever.cs" Line="526" Column="5" />
+      <File FileName="Circuits/flipflops.cs" Line="39" Column="4" />
+      <File FileName="Circuits/Circuit.cs" Line="654" Column="17" />
+      <File FileName="Circuits/Filters/RC.cs" Line="22" Column="19" />
+      <File FileName="Circuits/Forces/absForces.cs" Line="1" Column="1" />
+      <File FileName="Circuits/Forces/FormulaForce.cs" Line="1" Column="1" />
+      <File FileName="Circuits/Forces/vdwtorn.cs" Line="12" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="vafmpro" expanded="True">
+            <Node name="Circuits" expanded="True">
+              <Node name="Forces" expanded="True" />
+              <Node name="Cantilever.cs" selected="True" />
+            </Node>
+            <Node name="customs" expanded="True" />
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="ClassPad">
+        <State expanded="True">
+          <Node name="vafmpro" expanded="True">
+            <Node name="vafmpro" expanded="True">
+              <Node name="AbsCircuits" expanded="True">
+                <Node name="vafmpro.AbsCircuits.Channel" expanded="True" selected="True" />
+                <Node name="vafmpro.AbsCircuits.Circuit" expanded="True" />
+              </Node>
+              <Node name="Circuits" expanded="True" />
+              <Node name="Instructions" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.Debugger.WatchPad">
+        <State>
+          <Value>x[0]</Value>
+          <Value>xc[0]</Value>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/home/felix/Dropbox/vafmpro/vafmpro/Circuits/Circuit.cs" line="1319" />
+      <Breakpoint file="/home/felix/Dropbox/vafmpro/vafmpro/Circuits/Circuit.cs" line="1318" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

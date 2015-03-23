@@ -1,0 +1,8 @@
+﻿instruction list for scanner
+
+
+move (displacement x) (displacement y) (displacement z) (speed v): move the cantilever of a vector {x,y,z} at constant speed v
+move (new x) (new y) (new z) (speed v): move the cantilever to a new position {x,y,z} at constant speed v
+
+
+

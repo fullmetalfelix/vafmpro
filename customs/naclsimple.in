@@ -1,0 +1,28 @@
+#Simple forcefield: checkerboard pattern
+
+<variables>
+La=0.564
+<end>
+
+<circuits>
+
+
+
+opAbs  abs
+SKLP lowpass fc=f Q=0.707106781 gain=1.570827842     #the lowpass filter
+
+<end>
+
+<externals>
+input signal
+output amp
+<end>
+
+<connections>
+me.signal   abs.in
+abs.out 	lowpass.signal
+lowpass.out me.amp
+<end>
+
+
+

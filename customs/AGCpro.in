@@ -1,0 +1,58 @@
+﻿#Amplitude Gain Control
+#correct the signal removing its offset
+#measures the amplitude and compare with setpoint
+#give amplitude and R gain as output
+
+<variables>
+f=200
+<end>
+
+<circuits>
+SKLP lpoffset fc=10 Q=0.707106781 gain=1.570827842     #the lowpass filter
+#runavg lpoffset samples=30000
+opSub  osignal
+
+opAbs  abs
+SKLP lpsignal fc=f Q=0.707106781 gain=1.570827842     #the lowpass filter
+
+PI  agc
+opLLim limiter min=0
+
+opDiv div
+opBLim slimit max=1 min=-1
+
+<end>
+
+<externals>
+input signal
+input set
+input KP
+input KI
+output amp
+output Rt
+output offset
+output nsignal  #the signal will be normalized to its amplitude
+<end>
+
+<connections>
+me.signal       lpoffset.signal
+me.signal       osignal.in1
+lpoffset.out    osignal.in2
+osignal.out     abs.in      #abs.out is the abs of signal without offset
+lpoffset.out    me.offset
+
+abs.out         lpsignal.signal
+lpsignal.out    me.amp
+lpsignal.out    agc.signal
+me.set          agc.set
+me.KP           agc.KP
+me.KI           agc.KI
+agc.out         limiter.in  #do not allow for negarive R(t)
+limiter.out     me.Rt
+
+osignal.out     div.in1
+lpsignal.out    div.in2
+div.out         slimit.in
+slimit.out      me.nsignal
+
+<end>

@@ -1,0 +1,140 @@
+#RESONANCE SHEAR TEST
+
+<variables>
+fmax=30
+fmin=22
+M1=0.031
+M2=0.060
+MI=0.11
+Ks=860
+K2=7000
+gammaCM=0.066
+gamma2=0.2
+gammaRot=0.05
+springx=0.05
+springy=0.01
+eta=10
+fpoint=-0.08
+<end>
+
+<circuits>
+timer time dt=1.0e-5
+
+ramper framp speed=0 min=fmin max=fmax
+waver exciter amp=0.0005 freq=fmin
+
+RSA rsa eta=0 mu=0.0 M1=M1 M2=M2 MI=MI gammaCM=gammaCM gamma2=gamma2 gammaRot=gammaRot Ks=Ks K2=K2 springx=springx springy=springy fpoint=fpoint pushed=true
+
+composite ampxcm type=dAMP
+composite ampang type=dAMP
+composite ampa type=dAMP # f=1
+
+
+<end>
+
+<connections>
+#framp.out	forcer.freq
+exciter.sin	rsa.exciter
+rsa.xcm		ampxcm.signal
+rsa.theta	ampang.signal
+rsa.out		ampa.signal
+scanner.record	output.1
+<end>
+
+
+<cantilever>
+position  0.0 0.0  3.0  # in nm -> z is qz, x is y, y is bias
+
+flexmodes 1
+flexQ     1
+flexk	  1
+tipInitZ  0		0
+<end>
+
+
+<output>
+debug_c.txt	100 time.t exciter.sin rsa.out ampa.amp ampang.amp rsa.xcm rsa.ycm rsa.theta rsa.x2
+response_c.txt	10000  exciter.freq ampa.amp ampxcm.amp ampang.amp
+<end> 
+
+
+<script>
+moveto x=fmin v=100
+wait t=1
+setinput output.0=0
+wait t=10
+connect scanner.holderx->exciter.freq #scanner.holdery->rsa.eta
+setinput output.0=1
+wait t=1
+setinput output.0=0
+wait t=10
+goto func=5 times=10
+wait t=1
+setinput output.0=0
+move x=0.2 v=1
+scan  x=1 len=0.0001  v=0.1  pts=2
+setinput output.0=1
+wait t=0.5
+setinput output.0=0
+goto func=11 times=200  #this collects the resonance curve
+<end>
+move y=0.1 v=1
+wait t=100
+rmout channel=1 base=response_eta n=scanner.holdery
+rmout channel=0 base=debug_eta n=scanner.holdery
+moveto x=fmin v=10
+goto func=11 times=1000 #and this sweeps the friction
+
+
+
+
+setinput output.0=0
+move y=0.1 v=1
+wait t=100
+rmout channel=1 base=response_eta n=scanner.holdery
+moveto x=fmin
+goto func=7 times=1000
+<end>
+
+
+
+
+<composites>
+aAMP	./customs/aAMPD.in
+dAMP	./customs/dAMPD.in
+dPFD	./customs/dPFD.in
+AGC		./customs/AGC.in
+
+DUM		./customs/dummy.in
+PMAMP	./customs/PM-AMPD.in
+PMEXC	./customs/PM-EXC.in
+PMPD    ./customs/PM-PD.in
+PFD		./customs/PFDetector.in
+
+VCO		./customs/VCO.in
+SQD		./customs/SQD.in
+PLL		./customs/PLL.in
+MFAGC	./customs/MFAGC.in
+
+AMP		./customs/AmpD2.in
+eAMP	./customs/eAMP.in
+ADC		./customs/ADC.in
+FD      ./customs/FD.in
+NORM	./customs/signalnorm.in
+<end>
+
+<customs>
+TEST    ./customs/netTest.in
+<end>
+
+
+
+
+setinput output.1=0
+wait t=0.005
+setinput output.1=1 output.0=1
+wait t=0.0002
+setinput output.1=0
+wait t=0.02
+setinput output.1=1
+wait t=0.0005

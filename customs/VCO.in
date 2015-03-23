@@ -1,0 +1,33 @@
+﻿#voltage controlled oscillator
+# 
+
+<circuits>
+
+waver  oscillator amp=1
+#waversaw  saw amp=1 phase=0.25
+opAdd  adder            #adds the f0 and the incoming signal
+
+<end>
+
+<externals>
+input signal   #a signal related to the frequency shift
+input f0       #the fundamental frequency
+output freq
+output cos
+output sin
+output saw
+<end>
+
+
+<connections>
+me.f0		adder.in1	#sums the fundamental and the df signal (after amplification)
+me.signal   adder.in2
+
+adder.out  oscillator.freq  me.freq  #saw.freq
+
+# connect the output ports
+oscillator.cos    me.cos
+oscillator.sin    me.sin
+#saw.out  me.saw
+<end>
+

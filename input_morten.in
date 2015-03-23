@@ -1,0 +1,219 @@
+#text file
+
+<circuits>
+timer 5.0e-8
+
+f3Dl  force  forces.in
+f3DBxyLz force2 forces.in
+
+vdw-psc vdw  5.0e-19 10.0  30.0     # Hamaker in SI, R, angle
+op+ forceadd
+
+const f0   150000   #fundamental frequency
+
+
+composite PLL pll
+composite AGC agc
+composite AMP vamp
+composite ADC adc
+composite FD  fd
+
+SKLP offset 200 0.707106781 1.0
+op- csignal
+
+#custom  TEST  net
+
+op*  zexc
+
+op/  Adivider
+
+const amp 15.0
+const df0 -50.0
+<end>
+
+<connections>
+#--- oscillator  ---
+ONE.value	wave.amp
+f1.value	wave.freq
+ONE.value	wave2.amp
+f0.value	wave2.freq
+
+#-------------------
+cantilever.z offset.signal
+cantilever.z csignal.in1
+offset.out csignal.in2
+csignal.out  agc.signal			#send the signal to agc
+csignal.out  Adivider.in1		#send it to the amp divider too
+agc.amp		 Adivider.in2
+
+#------ PLL --------
+f0.value	pll.f0
+Adivider.out pll.signal1		#normalized oscillation to the pll
+pll.sin	pll.signal2             #vco oscillation to the pll to feedback
+
+#--- AGC ---
+agc.Rt  zexc.in1
+pll.sin  zexc.in2
+#cantilever.vz zexc.in2
+zexc.out cantilever.zex
+
+#--- ADC ---
+pll.df		adc.df
+scanner.holderz adc.zscan
+
+#--- FD  ---
+cantilever.z  fd.signal
+
+adc.out  cantilever.holderz
+
+#--- forces ---
+cantilever.xabs  force.x
+cantilever.yabs  force.y
+cantilever.zabs  force.z
+cantilever.zabs  vdw.ztip
+force.F0  cantilever.Fx
+force.F1  cantilever.Fy
+force.F2  forceadd.in1
+vdw.Fz    forceadd.in2
+vdw.Fz  cantilever.Fz
+
+
+#scanner.holderz cantilever.holderz
+scanner.holdery cantilever.holdery
+scanner.holderx cantilever.holderx
+<end>
+
+<secondary>
+pll.signal2
+<end>
+
+<cantilever>
+position -1.0e-16 0.0 15.6  # in nm
+tipInit  0.0 15.0  #Y and Z
+modes    flex tr
+freqs    149986.1 15000
+springs  26   2000
+Qfactors 30000 30000
+vdw		10.0  30.0  5.0e-19   # R, angle, Hamaker in SI
+forcefield  forces.in
+
+<end>
+
+
+<output>
+#output.txt 5000  time.t  pll.df agc.amp agc.Rt adc.out offset.out
+#scanln.txt 9000	 scanner.holderx  scanner.holdery  pll.df  agc.amp cantilever.holderz
+#detail.txt 1 time.t pll.signal1 pll.signal2 pll.sin pll.cos
+detail.txt 1 gauss.norm gauss.unif
+<end> 
+
+
+<scanner>
+setinput gauss.tick 1
+wait 0.005
+<end>
+
+<oldscanner>
+#----- RELAXATION -----
+setinput output.2 0  output.0 0   output.1 0
+setinput agc.KP 0.0005  agc.KI 0.04  agc.set amp.value     #setup the AGC a mild stiffness
+wait 0.005	#charge the filters
+setinput	output.0 1										#enable output
+
+#connect pllgain.out pll.gain
+#setinput pllgain.speed 4000
+#####wait 0.25
+
+#####waitFlat 0.05  agc.amp amp.value 0.001                     #relax until amplitude is ok
+
+### print detailed oscillations for short period
+#####setinput output.2 1
+#####wait 0.005
+#####setinput output.2 0
+
+
+#----- APPROACH WITH ADC! -----
+#setinput  adc.set df0.value  adc.KP 0.002  adc.KI 2.0   #activate the ADC by tuning the KP/KI
+#setinput  adc.zlim  15.31   #limit the adc so it will not crash!
+#waitFlat  0.1  pll.df df0.value 0.05
+
+#----- APPROACH N00BISHLY! -----
+#####moveto 0.0 0.0 16.00 20.0
+#####setinput  adc.set df0.value  adc.KP 0.000  adc.KI 0.1   #activate the ADC by tuning the KP/KI
+#####setinput  adc.zlim  15.31   #limit the adc so it will not crash!
+#####waitFlat  0.1  pll.df df0.value 0.05
+#####wait 0.5
+#####setinput  adc.KP 0.0  adc.KI 0.0  #deactivate the ADC
+#####setinput output.2 1
+#####wait 0.005
+#####setinput output.2 0
+
+
+#----- START SCANNING! -----
+connect  scanner.record  output.1  #connect the outputstream scanln.txt to the scanner recorder
+#setinput output.1 0
+#####scan  dirx diry dirz len  speed   samples
+	scan  0.0  1.0  0.0  1.0  10.0     100
+	wait 0.001            #wait a little bit to write the last point
+	writeout 1            #empty line in the output
+	move 0.02 -2 0 100    #move back
+	goto 5 50
+wait 0.001
+<end>
+
+
+setinput  output.0 1 output.2 0 output.3 0 #deacrivate some outputs
+
+wait  0.01                  #charge the filters
+setinput  output.0 1        #start writing output.txt
+setinput agc.KP 0.005  agc.KI 1  #setup the AGC stiffness
+wait 0.1
+setinput output.3 1
+wait 0.005
+setinput output.3 0
+
+#
+
+
+setinput output.3 1
+wait 0.001
+setinput output.3 0
+#----- APPROACH WITH ADC! -----
+setinput  output.0 1               #start writing the PLL frequency
+#moveto 0.0 0.0 18.0 2000           #preapproach
+#wait 0.1
+#setinput output.3 1
+#wait 0.001
+#setinput output.3 0
+setinput  adc.set df0.value  adc.KP 0.002  adc.KI 0.80   #activate the ADC by tuning the KP/KI
+waitFlat 0.2  pll.df df0.value 0.2                     #wait until the df is the set one
+setinput  adc.KP 0.0  adc.KI 0.0				   #ADC is harmless now!
+
+
+wait 0.1
+setinput output.3 1
+wait 0.001
+setinput output.3 0
+#----- START SCANNING! -----
+connect  scanner.record  output.2  #connect the outputstream scanln.txt to the scanner recorder
+#setinput output.0 0
+   #scan  dirx diry dirz len  speed   samples
+	scan  0.0  1.0  0.0  2.0  10.0     100
+	wait 0.001            #wait a little bit to write the last point
+	writeout 2            #empty line in the output
+	move 0.02 -2 0 100    #move back
+	goto 10 50
+
+wait 0.2
+
+<end>
+
+<composites>
+PFD		/home/felix/projects/vafmpro/vafmpro/bin/Debug/spinel_ideal_last/circuits/PFDetector.in
+PLL		/home/felix/projects/vafmpro/vafmpro/bin/Debug/spinel_ideal_last/circuits/PLL.in
+AGC		/home/felix/projects/vafmpro/vafmpro/bin/Debug/spinel_ideal_last/circuits/AmpD.in
+AMP		/home/felix/projects/vafmpro/vafmpro/bin/Debug/spinel_ideal_last/circuits/AmpD2.in
+ADC		/home/felix/projects/vafmpro/vafmpro/bin/Debug/spinel_ideal_last/circuits/ADC.in
+FD      /home/felix/projects/vafmpro/vafmpro/bin/Debug/spinel_ideal_last/circuits/FD.in
+<end>
+

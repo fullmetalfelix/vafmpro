@@ -1,0 +1,27 @@
+# force input file for Fxyz(X,Y,Z)﻿
+
+<grid>
+forceunits	1.0 #nN
+gridunits	ang #NOT FOR POTENTIALS
+
+unitcell 5.64 5.64 
+replicate	3
+cutoff	20.0
+
+periodicity pacman pacman
+
+<end>
+
+<types>
+Na potential=morse A=0.01 r0=0.198822338 d=0.12  # V(r) = A ( 1-Exp(-(r-r0)/d) )^2
+Cl potential=exp   A=0.05 r0=0.04 d=0.06  # V(r) = A ( 1-Exp(-(r-r0)/d) )^2
+<end>
+
+#morse force minimum at r = r0 - d ln(c/2)  [c=1]
+
+<atoms>
+Na	0 0 0
+Cl	2.82	0.00	0
+Cl	0.00	2.82	0
+Na	2.82	2.82	0
+<end>

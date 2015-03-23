@@ -1,0 +1,111 @@
+
+<variables>
+f0=150000	#Hz  your cantilever eigenfrequency
+a0=1		#nm  the setpoint amplitude
+<end>
+
+<circuits> #------------------------------------------------------------------
+timer time dt=1.0e-8  #10ns timestep just to be cool
+
+composite pfd	type=dPFD	gain=2000 fc=1500
+composite vco	type=VCO	f0=f0	#set the fundamental frequency to f0 (variable)
+
+composite agc	type=AGC	f=1000  #auto gain control. override f if analog amp is used
+composite eexc	type=NORM f=1000	#normalize the velocity of the cantilever
+
+opMul	exciter  in2=0.1
+
+#use your forcefield here
+#i3Dlin  force  file=calciteff_2.dat
+
+
+<end> #-----------------------------------------------------------------------
+
+<connections> #---------------------------------------------------------------
+
+#--- amplitude control ---
+cantilever.z	agc.signal
+
+#--- PLL connections ---
+cantilever.z	pfd.ref
+pfd.df		vco.signal		#give the pfd frequency shift to the vco
+vco.sin		pfd.vco			#feedback the vco to the phase frequency detector
+
+#--- Excitation control ---
+cantilever.vz	eexc.signal
+eexc.out		exciter.in1		#use this for exact self-excitation
+#vco.cos			exciter.in1	#or this to use the PLL signal as excitation
+agc.Rt			exciter.in2
+exciter.out		cantilever.zex
+
+#--- Forces ---
+#cantilever.xabs	force.x
+#cantilever.yabs	force.y
+#cantilever.zabs	force.z
+#force.F0		cantilever.Fz
+
+#--- scanner ---
+scanner.holderx	cantilever.holderx
+scanner.holdery	cantilever.holdery
+scanner.holderz	cantilever.holderz
+scanner.record output.1		#image only when the scanner says so
+<end> #-----------------------------------------------------------------------
+
+<cantilever>
+position  0.0  0.0  5.0  # in nm  - offset position of the holder
+
+flexmodes f0
+flexQ     10000
+flexk	  27.7
+tipInitZ  a0		1
+
+<end>
+
+
+<output>
+approach.txt 10000	time.t	scanner.holderz pfd.df agc.amp agc.Rt
+image.txt		1	time.t	scanner.holderx scanner.holdery pfd.df agc.amp agc.Rt
+<end>
+
+
+<script>
+wait t=0.001
+setinput	agc.KI=400.0 agc.KP=0.8 agc.set=a0		#configure the AGC
+waitFlat	t=0.01 value=a0 tol=0.002 channel=agc.amp		#wait for relaxation
+move	z=-3.4	v=50	#approach!
+wait t=0.01		#wait for some time to relax again
+
+	scan  x=1 len=2.0  v=10  pts=200
+	wait t=0.001                #wait a little bit to write the last point
+	write channel=1          #empty line in the output
+	move x=-2.0 y=0.05 v=20    #move back and up
+	wait t=0.05			      #relax a bit
+	goto func=5 times=40	#repeat on the new line
+	wait t=0.01
+
+<end>
+
+
+wait t=0.0001
+setinput	output.1=0	agc.KI=400.0 agc.KP=0.8 agc.set=a0
+waitFlat	t=0.01	value=a0 tol=0.002 channel=agc.amp
+setinput	output.1=1
+wait t=0.0001
+setinput	output.1=0
+move	v=50 z=-1.5
+wait t=0.04
+setinput	output.1=1
+wait t=0.0001
+setinput	output.1=0
+
+
+#correct the paths here if you are running the code from a different directory
+#or copy the composites definitions somewhere useful... or both things!
+<composites>
+dPFD		./customs/dPFD.in	#digital phase/freq detector: override gain and fc (bandwidth)
+VCO			./customs/VCO.in	#voltage controlled oscillator
+dAMP		./customs/dAMPD.in	#digital amplitude detector
+aAMP		./customs/aAMPD.in	#analog  amplitude detector
+NORM		./customs/NORM.in	#signal normalizer (analog)
+AGC			./customs/AGC.in	#amplitude gain controller
+<end>

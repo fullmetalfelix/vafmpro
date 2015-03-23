@@ -1,0 +1,28 @@
+
+<variables>
+lag=1.0e-6
+<end>
+
+<circuits>
+
+delay lagger	time=lag
+flip  front
+
+opMul mul	ticked=1
+
+<end>
+
+<externals>
+input signal
+output amp
+output lagged
+<end>
+
+
+<connections>
+me.signal	lagger.signal	mul.in1
+lagger.out	front.signal	me.lagged
+front.tick	mul.in2	mul.tick
+mul.out		me.amp
+<end>
+

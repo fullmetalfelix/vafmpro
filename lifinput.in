@@ -1,0 +1,180 @@
+#text file
+
+<variables>
+fz=943485
+fy=1499111
+Az=0.035
+Ay=0.015
+<end>
+
+<circuits>
+timer time dt=3.0e-9
+
+composite agcz type=AGC KI=400.0 KP=0.8 set=Az
+composite agcy type=AGC KI=400.0 KP=0.8 set=Ay
+
+composite pfdz type=dPFD gain=2000 fc=1500
+composite pfdy type=dPFD gain=2000 fc=1500
+
+composite vcoz	type=VCO	f0=fz
+composite vcoy	type=VCO	f0=fy
+
+i3Dlin force	file=lif1.in
+
+opMul exciterz
+opMul excitery
+
+composite fdy	type=FD
+
+waver fcanti freq=fy amp=Ay
+
+SKLP dfavg fc=200 Q=0.707106781 gain=1.570827842 pushed=true #dfavg rate=10000
+
+<end>
+
+<connections>
+
+cantilever.z	agcz.signal
+cantilever.y	agcy.signal fdy.signal
+
+cantilever.z	pfdz.ref
+cantilever.y	pfdy.ref
+
+pfdz.df		vcoz.signal
+pfdy.df		vcoy.signal
+
+vcoz.sin	pfdz.vco
+vcoy.sin	pfdy.vco
+
+
+#--- Excitation control ---
+vcoy.cos		excitery.in1		#use this for exact self-excitation
+agcy.Rt			excitery.in2
+excitery.out	cantilever.yex
+
+#--- Excitation control ---
+vcoz.cos		exciterz.in1		#use this for exact self-excitation
+agcz.Rt			exciterz.in2
+exciterz.out	cantilever.zex
+
+#--- Forces ---
+cantilever.yabs	force.x  #force.x is the y of the forcefield
+cantilever.zabs	force.z  #force.z is the z of the forcefield
+#cantilever.xabs force.y #force.y is the bias
+
+scanner.holdery cantilever.holdery
+scanner.holderx force.y  #bias
+scanner.holderz	cantilever.holderz
+
+force.F0	cantilever.Fy
+
+pfdy.df		dfavg.signal
+
+<end>
+
+
+<cantilever>
+position  0.0  0.2  2.0  # in nm -> z is z, x is y, y is bias
+
+flexmodes fz
+flexQ     6340
+flexk	  1238
+tipInitZ  Az		1
+
+latmodes fy	
+latQ     90998
+latk	  2000
+tipInitY  Ay		1
+
+forcemodule force
+
+<end>
+
+
+<output>
+relaxo.txt	10000 time.t  agcz.amp pfdz.df agcy.amp pfdy.df dfavg.out
+debugo.txt	10 time.t  cantilever.z vcoz.sin cantilever.y vcoy.sin force.F0
+sweep_all.txt   1 scanner.holderx scanner.holderz pfdz.df pfdy.df
+<end> 
+
+
+<script>
+setinput output.0=1 output.1=0 output.2=0
+wait t=0.02
+move z=-1.9 v=1000.0           
+wait t=0.01
+setinput output.1=1
+wait t=0.00001
+setinput output.1=0
+connect scanner.record->output.2
+scan x=1 len=0.4  v=2  pts=200
+	wait t=0.001
+	write channel=2 
+	move z=0.001 x=-0.4 v=10 # go up 1 pico
+	wait t=0.02
+	#goto func=7 times=5
+wait t=0.001
+<end>
+
+
+
+
+
+
+
+wait t=0.05  #relaxation of the world
+move z=-3 v=100
+wait t=0.01
+move z=-0.6 v=100
+wait t=0.02
+connect scanner.record->output.1
+	scan  x=1 len=1.0  v=100  pts=200
+	wait t=0.001                #wait a little bit to write the last point
+	write channel=1          #empty line in the output
+	move x=-1.0 y=0.05 v=100    #move back and up
+	wait t=0.005			      #relax a bit
+	#goto func=7 times=20	#repeat on the new line
+	wait t=0.01
+
+<end>
+
+
+<composites>
+aAMP	./customs/aAMPD.in
+dAMP	./customs/dAMPD.in
+dPFD	./customs/dPFD.in
+AGC		./customs/AGC.in
+
+DUM		./customs/dummy.in
+PMAMP	./customs/PM-AMPD.in
+PMEXC	./customs/PM-EXC.in
+PMPD    ./customs/PM-PD.in
+PFD		./customs/PFDetector.in
+
+VCO		./customs/VCO.in
+SQD		./customs/SQD.in
+PLL		./customs/PLL.in
+MFAGC	./customs/MFAGC.in
+
+AMP		./customs/AmpD2.in
+eAMP	./customs/eAMP.in
+ADC		./customs/ADC.in
+FD      ./customs/FD.in
+NORM	./customs/signalnorm.in
+<end>
+
+<customs>
+TEST    ./customs/netTest.in
+<end>
+
+
+
+
+setinput output.1=0
+wait t=0.005
+setinput output.1=1 output.0=1
+wait t=0.0002
+setinput output.1=0
+wait t=0.02
+setinput output.1=1
+wait t=0.0005

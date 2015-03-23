@@ -1,0 +1,53 @@
+﻿timer (Timer):
+	time control
+	output ports: t, dt
+
+fgen (Oscillator):
+	frequency generator
+	input ports : amp, freq
+	output ports: sin, cos
+
+gain (Gain):
+	constant factor multiplier
+	input ports : signal
+	output ports: out
+
+operators op+ op- op* op/ opEQ opLEQ opGEQ:
+	binary operators
+	input ports : in1, in2
+	output ports: out
+
+operator opAbs (opAbs)
+	absolute value
+	input ports : in
+	output ports: out
+
+const (Constant)
+	numerical constant value
+	output ports: value
+
+ALP (ALP)
+	Active lowpass filter (some model of it i dont know)
+	input ports : signal
+	output ports: out
+
+PLP (PLP)
+	passive lowpass filter (RC)
+	input ports : signal
+	output ports: out
+
+PI (PI)
+	proportional-integral feedback
+	input ports : signal, set, KP, KI
+	output ports: out
+
+PID (PID)
+	proportional-integral-derivative feedback
+	input ports : signal, set, KP, KI, KD
+	output ports: out
+
+(Scanner)
+	scanner controller
+	input ports : amp, df
+	output ports: holder(xyz), 
+
